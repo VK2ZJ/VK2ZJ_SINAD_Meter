@@ -7,7 +7,7 @@ The specific method implemented here is what has been in use in the radio comms 
 
 The signal is passed through the Psophometric filter as per ITU-T O.41 (see https://en.wikipedia.org/wiki/Psophometric_weighting).
 
-The app expexts a 1kHz tone.
+The app expects a 1kHz tone.
 
 Tested on Windows only so far, but should work on other systems.
 
