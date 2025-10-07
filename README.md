@@ -3,7 +3,7 @@ Little python app to measure SINAD with a PC audio input, such as a USB audio in
 
 SINAD stands for Signal-to-Noise and Distortion ratio.
 
-The specific method implemented here is what has been in use in the radio comms (and analog telephony) industry. A typical use case is testing FM receiver sensitivity. an example of the exact receiver sensivity test method is in the ETSI EN 300 086 standard.
+The specific method implemented here is what has been in use in the radio comms (and analog telephony) industry. A typical use case is testing FM receiver sensitivity. An example of the exact receiver sensivity test method is in the ETSI EN 300 086 standard.
 
 The signal is passed through the Psophometric filter as per ITU-T O.41 (see https://en.wikipedia.org/wiki/Psophometric_weighting).
 
