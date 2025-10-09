@@ -1,8 +1,8 @@
 # VK2ZJ SINAD Meter
 
-This is a little python app to measure SINAD (Signal-to-Noise and Distortion ratio) with a PC audio input, such as a USB audio interface.
+This is a little python app to measure SINAD (Signal-to-Noise and Distortion ratio) in real time with a PC audio input, such as a USB audio interface.
 
-The primary use case is evaluating radios, such as when measuring FM receiver sensitivity. It's time to let those old SINADDERs have some deserved rest on their museum shelves.
+The primary use case is evaluating radios, such as when measuring FM receiver sensitivity. It's time to let those old SINADDERs have some well deserved rest on their museum shelves.
 
 VK2ZJ_SINAD_Meter.exe is the main app. No installation required - just download and run it. Note: You may get a warning from Windows or your antivirus the first time you run the app. I haven't learned how to sign executables yet.
 
