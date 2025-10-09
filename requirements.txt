@@ -1,0 +1,6 @@
+docopt==0.6.2
+matplotlib==3.10.7
+numpy==2.3.3
+PyAudio==0.2.14
+scipy==1.16.2
+wxPython==4.2.1

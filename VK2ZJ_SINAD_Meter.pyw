@@ -5,6 +5,7 @@ import wx.lib.newevent
 import wx.lib.plot
 import pyaudio
 import ctypes
+import dsp
 
 # This hack sets the Windows taskbar icon to be the same as in SetIcon
 # below. Otherwise, Windows would use the python.exe icon. 
@@ -35,10 +36,11 @@ class SINAD_window(wx.Frame):
 
         self.n_samples = 2400 # samples per buffer
         self.n_samples_fft = 2048 # must be <= n_samples
-        self.n_samples_plot = 2000 # must be <= n_samples
+        self.n_samples_plot = 1000 # must be <= n_samples
 
         self.sinad_filter_coeff = 0.8
         self.sinad_filter_value = None
+        self.sinad_filter_value_pm = None
 
         self.plot_agc_coeff = 0.8
         self.plot_agc_value = None
@@ -65,34 +67,14 @@ class SINAD_window(wx.Frame):
 
     def init_bpf(self):
         # Psophometric filter as per ITU-T O.41 (see https://en.wikipedia.org/wiki/Psophometric_weighting)
-        freq = (
-            0, 16.66, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 
-            1400, 1600, 1800, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 6000, 8000, 
-            self.sample_rate/2)
-        gain = (
-            -85.0, -85.0, -63.0, -41.0, -21.0, -10.6, -6.3, -3.6, -2.0, -0.9, -0.0,
-             0.6, 1.0, -0.0, -0.9, -1.7, -2.4, -3.0, -4.2, -5.6, -8.5, -15.0, -25.0,
-             -36.0, -43.0, -80, -80)
-        gain_lin = 10**(np.array(gain)/20.0)
-        gain_lin[0] = 0
-        gain_lin[-1] = 0
-        self.bpf_coeffs = scipy.signal.firwin2(1001, freq, gain_lin, fs = self.sample_rate, antisymmetric = True)
-        self.bpf_state = scipy.signal.lfilter_zi(self.bpf_coeffs, [1])
+        self.bpf_coeffs, self.bpf_state = dsp.psophometric_filter(self.sample_rate)
 
 
     def init_notch_filter(self):
         # Notch filter coefficients for removing the test tone
-        self.tone_frequency = 1000.0
-        self.notch_filter_coeffs = scipy.signal.iirfilter(
-            16,
-            [self.tone_frequency - 50, self.tone_frequency + 50],
-            fs = self.sample_rate,
-            rp = 0.1,
-            rs = 150,
-            btype = 'bandstop',
-            ftype = 'ellip',
-            output = 'sos')
-        self.notch_filter_state = scipy.signal.sosfilt_zi(self.notch_filter_coeffs)
+        self.tone_frequency = 1e3
+        self.notch_filter_coeffs, self.notch_filter_state = dsp.notch_filter(self.sample_rate, self.tone_frequency)
+        self.notch_filter_coeffs_pm, self.notch_filter_state_pm = dsp.notch_filter(self.sample_rate, self.tone_frequency)
 
 
     def init_fft(self):
@@ -108,12 +90,12 @@ class SINAD_window(wx.Frame):
     def init_sinad_text(self):
         self.spacer_panel = wx.Panel(self.panel)
         self.spacer_panel.SetBackgroundColour(wx.Colour(0, 0, 0))
-        self.sizer.Add(self.spacer_panel, proportion = 1, border = 1, flag = wx.EXPAND)
-        self.sinad_text = wx.StaticText(self.panel, -1, "SINAD = --- dB")
-        self.sinad_text.SetFont(wx.Font(18, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+        self.sizer.Add(self.spacer_panel, proportion = 1, border = 2, flag = wx.EXPAND)
+        self.sinad_text = wx.StaticText(self.panel, -1, "SINAD = %3.1fdB (psopho: %3.1fdB)" % (0, 0))
+        self.sinad_text.SetFont(wx.Font(14, wx.FONTFAMILY_SWISS, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
         self.sinad_text.SetBackgroundColour(wx.Colour(0, 0, 0))
         self.sinad_text.SetForegroundColour(wx.Colour(0, 255, 255))
-        self.sizer.Add(self.sinad_text, proportion = 2, border = 1, flag = wx.CENTER)
+        self.sizer.Add(self.sinad_text, proportion = 1, border = 1, flag = wx.CENTER)
 
 
     def init_td_plot(self):
@@ -153,25 +135,36 @@ class SINAD_window(wx.Frame):
         # Convert samples from faw 32-bit buffer to array of floats
         samples = np.frombuffer(event.sound_data, dtype = np.int32).astype(np.float64)
 
-        # Band-pass filter the audio with the psophometric filter as per ITU-T O.41 
-        bpf_samples, self.bpf_state = scipy.signal.lfilter(self.bpf_coeffs, [1], samples, zi = self.bpf_state)
-
-        # Calculate the signal + noise + distortion power, in dB
-        sind_power_dB = 20 * np.log10(np.sqrt(np.mean(bpf_samples**2)))
-
-        # Notch out the tone
-        notched_samples, self.notch_filter_state = scipy.signal.sosfilt(self.notch_filter_coeffs, bpf_samples, zi = self.notch_filter_state)
-
-        # Calculate the noise + distortion power, in dB
-        nd_power_dB = 20 * np.log10(np.sqrt(np.mean(notched_samples**2)))
+        # Get SINAD for this block of samples, without any bandpass filter
+        new_sinad, self.bpf_state, self.notch_filter_state = dsp.calculate_SINAD(
+            self.sample_rate,
+            samples,
+            self.bpf_coeffs,
+            self.bpf_state,
+            self.notch_filter_coeffs,
+            self.notch_filter_state)
 
         # Smooth out the SINAD estimate, so that that displayed values changes slowly    
-        new_sinad = sind_power_dB - nd_power_dB
         if self.sinad_filter_value is None:
             self.sinad_filter_value = new_sinad
         else: 
             self.sinad_filter_value = self.sinad_filter_coeff * self.sinad_filter_value + (1 - self.sinad_filter_coeff) *  new_sinad
-        self.sinad_text.SetLabel("SINAD = %3.1fdB" % self.sinad_filter_value)
+
+        # Repeat. but with the Psophometric filter
+        new_sinad_pm, self.bpf_state_pm, self.notch_filter_state_pm = dsp.calculate_SINAD(
+            self.sample_rate,
+            samples,
+            None,
+            None,
+            self.notch_filter_coeffs_pm,
+            self.notch_filter_state_pm)
+
+        if self.sinad_filter_value_pm is None:
+            self.sinad_filter_value_pm = new_sinad_pm
+        else: 
+            self.sinad_filter_value_pm = self.sinad_filter_coeff * self.sinad_filter_value_pm + (1 - self.sinad_filter_coeff) *  new_sinad_pm
+
+        self.sinad_text.SetLabel("SINAD = %3.1fdB (psopho: %3.1fdB)" % (self.sinad_filter_value, self.sinad_filter_value_pm))
 
         # Apply slow AGC to the samples to keep then in -1..1 range, to simplify the real time plotting
         new_agc = 1.0 / np.max(np.abs(samples))
