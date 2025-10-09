@@ -20,7 +20,7 @@ Limitations:
 * The notch filter in the SINAD algorithm implementation is only 50Hz wide, so you must use a good signal generator with the modulation frequency accuracy or ±25Hz.
 * The result will only be as good as the audio input of your PC. Turn off all input processing effects, like Dolby, AGC, etc.
 * The app won't measure very high SINAD such as what might be needed for high-end audio equiment. Most audio input devices / chipsets don't have the required performance.
-* The input level must not cause clipping in the audio input.. adjust your radio volume while monitorinh the waveform plot the app gives you, to spot-check for clipping and other issues.
+* The input level must not cause clipping in the audio input.. adjust your radio volume while monitoring the waveform plot the app gives you, to spot-check for clipping and other issues.
 
 Tested on Windows only so far, but the underlying python code should work on most OSes.
 
