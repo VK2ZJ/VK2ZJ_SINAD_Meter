@@ -25,7 +25,7 @@ Limitations:
 Tested on Windows only so far, but the underlying python code should work on most OSes.
 
 Verification:
-Thanks G0HZU for providing some test vectors. The underlying DSP library matches the test vector within a fraction of a dB. I'm keen for others to provide other test vectors. You can process any wav files recorded at 44.1kHz or higer sample rate, using the sinad_wav.exe command line program. Just open the Windows command line, type sinad_wav.exe <wave_filename>, and you'll get a plot of SINAD over time.
+Thanks G0HZU for providing some test vectors. The underlying DSP library matches the test vector within a fraction of a dB. I'm keen for others to provide other test vectors. You can process any wav files recorded at 44.1kHz or higer sample rate, using the sinad_wav.exe command line program. Just open the Windows command line, type sinad_wav.exe <wave_filename>, and you'll get a plot of SINAD over time. The program sinad_wav uses the same library as the main app. The library itself is dsp.py.
 
 Additional info on each file in this repo:
 * LICENSE.. as usual
