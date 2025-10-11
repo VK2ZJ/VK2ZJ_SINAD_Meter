@@ -18,9 +18,10 @@ The first number on the top of the window is the SINAD without any filter, excep
 Limitations:
 * The app expects a 1kHz tone, which is the standard for testing radio sensitivity.
 * The notch filter in the SINAD algorithm implementation is only 50Hz wide, so you must use a good signal generator with the modulation frequency accuracy or ±25Hz.
-* The result will only be as good as the audio input of your PC. Turn off all input processing effects, like Dolby, AGC, etc.
+* The result will only be as good as the audio input of your PC. Turn off all input processing effects, like Dolby, AGC, etc. Go to Sound Settings on Windows, click the audio input you're using and disable "Audio Enhancements".
 * The app won't measure very high SINAD such as what might be needed for high-end audio equiment. Most audio input devices / chipsets don't have the required performance.
 * The input level must not cause clipping in the audio input.. adjust your radio volume while monitoring the waveform plot the app gives you, to spot-check for clipping and other issues.
+* Using a USB microphone in front of your radio's speaker can work, but results may vary. For example, the miniDSP UMIK-1 won't work due to its high 1/f noise.
 
 Tested on Windows only so far, but the underlying python code should work on most OSes.
 
