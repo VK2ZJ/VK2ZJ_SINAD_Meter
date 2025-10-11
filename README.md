@@ -47,3 +47,7 @@ Additional info on each file in this repo:
 
 
 ![alt text](https://github.com/VK2ZJ/VK2ZJ_SINAD_Meter/blob/main/VK2ZJ_SINAD_Meter.png?raw=true)
+
+Contributors:
+ * G0HZU
+ * Roger Need
